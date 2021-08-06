@@ -1,0 +1,244 @@
+import com.badlogic.gdx.tools.texturepacker.TexturePacker
+
+buildscript {
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        maven { url "https://plugins.gradle.org/m2/" }
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        jcenter()
+        google()
+    }
+    dependencies {
+        classpath 'org.wisepersist:gwt-gradle-plugin:1.0.6'
+        classpath 'com.android.tools.build:gradle:3.2.0'
+        classpath 'com.mobidevelop.robovm:robovm-gradle-plugin:2.3.6'
+        classpath 'de.richsource.gradle.plugins:gwt-gradle-plugin:0.6'
+        classpath 'org.robovm:robovm-gradle-plugin:1.8.0'
+        classpath "com.badlogicgames.gdx:gdx-tools:1.9.9"
+
+    }
+}
+
+allprojects {
+    apply plugin: "eclipse"
+    apply plugin: "idea"
+
+    version = project.APP_VERSION
+    ext {
+        appName = "energen"
+        gdxVersion = '1.9.9'
+        roboVMVersion = '2.3.6'
+        box2DLightsVersion = '1.4'
+        ashleyVersion = '1.7.0'
+        aiVersion = '1.8.0'
+    }
+
+    repositories {
+        mavenLocal()
+        mavenCentral()
+        jcenter()
+        google()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+        maven { url "https://oss.sonatype.org/content/repositories/releases/" }
+    }
+}
+
+project(":desktop") {
+    apply plugin: "java"
+
+
+    dependencies {
+        compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-lwjgl:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-desktop"
+        compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-desktop"
+
+    }
+}
+
+project(":android") {
+    apply plugin: "android"
+
+    configurations { natives }
+
+    dependencies {
+        compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-android:$gdxVersion"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-armeabi-v7a"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-arm64-v8a"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86"
+        natives "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-x86_64"
+        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-armeabi-v7a"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-arm64-v8a"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86"
+        natives "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-x86_64"
+
+    }
+}
+
+project(":ios") {
+    apply plugin: "java"
+    apply plugin: "robovm"
+
+
+    dependencies {
+        compile project(":core")
+        compile "com.mobidevelop.robovm:robovm-rt:$roboVMVersion"
+        compile "com.mobidevelop.robovm:robovm-cocoatouch:$roboVMVersion"
+        compile "com.badlogicgames.gdx:gdx-backend-robovm:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-platform:$gdxVersion:natives-ios"
+        compile "com.badlogicgames.gdx:gdx-box2d-platform:$gdxVersion:natives-ios"
+
+    }
+}
+
+project(":html") {
+    apply plugin: "gwt"
+    apply plugin: "war"
+
+
+    dependencies {
+        compile project(":core")
+        compile "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx:$gdxVersion:sources"
+        compile "com.badlogicgames.gdx:gdx-backend-gwt:$gdxVersion:sources"
+        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion:sources"
+        compile "com.badlogicgames.gdx:gdx-box2d-gwt:$gdxVersion:sources"
+
+    }
+}
+
+
+tasks.eclipse.doLast {
+    delete ".project"
+}
+project(":core") {
+    apply plugin: "java"
+
+    dependencies {
+        compile "com.badlogicgames.gdx:gdx:$gdxVersion"
+        compile "com.badlogicgames.gdx:gdx-box2d:$gdxVersion"
+        compile "joda-time:joda-time:2.2"
+        compile group: 'org.apache.commons', name: 'commons-lang3', version: '3.3.2'
+        compile ('com.googlecode.json-simple:json-simple:1.1.1') { exclude module: 'junit' }
+    }
+
+    task deleteAssets {
+        project.delete("../android/assets")
+        project.delete("../ios/assets")
+        project.delete("../desktop/assets")
+        project.delete("../html/assets")
+    }
+
+    task packTextures(dependsOn: deleteAssets) {
+        def androidPack = new File("${rootProject.getRootDir()}/android/assets/images/energen.pack.png")
+        def androidPack2 = new File("${rootProject.getRootDir()}/android/assets/images/energen.pack2.png")
+        def androidPack3 = new File("${rootProject.getRootDir()}/android/assets/images/energen.pack3.png")
+        def androidPack4 = new File("${rootProject.getRootDir()}/android/assets/images/energen.pack4.png")
+        def androidAtlas = new File("${rootProject.getRootDir()}/android/assets/images/energen.pack.atlas")
+
+        inputs.dir "${rootProject.getRootDir()}/core/assets/images"
+        outputs.file androidPack
+        outputs.file androidPack2
+        outputs.file androidPack3
+        outputs.file androidPack4
+        outputs.file androidAtlas
+
+        def iosPack = new File("${rootProject.getRootDir()}/ios/assets/images/energen.pack.png")
+        def iosPack2 = new File("${rootProject.getRootDir()}/ios/assets/images/energen.pack2.png")
+        def iosPack3 = new File("${rootProject.getRootDir()}/ios/assets/images/energen.pack3.png")
+        def iosPack4 = new File("${rootProject.getRootDir()}/ios/assets/images/energen.pack4.png")
+        def iosAtlas = new File("${rootProject.getRootDir()}/ios/assets/images/energen.pack.atlas")
+
+        inputs.dir "${rootProject.getRootDir()}/core/assets/images"
+        outputs.file iosPack
+        outputs.file iosPack2
+        outputs.file iosPack3
+        outputs.file iosPack4
+        outputs.file iosAtlas
+
+        def desktopPack = new File("${rootProject.getRootDir()}/desktop/assets/images/energen.pack.png")
+        def desktopPack2 = new File("${rootProject.getRootDir()}/desktop/assets/images/energen.pack2.png")
+        def desktopPack3 = new File("${rootProject.getRootDir()}/desktop/assets/images/energen.pack3.png")
+        def desktopPack4 = new File("${rootProject.getRootDir()}/desktop/assets/images/energen.pack4.png")
+        def desktopAtlas = new File("${rootProject.getRootDir()}/desktop/assets/images/energen.pack.atlas")
+
+        inputs.dir "${rootProject.getRootDir()}/core/assets/images"
+        outputs.file desktopPack
+        outputs.file desktopPack2
+        outputs.file desktopPack3
+        outputs.file desktopPack4
+        outputs.file desktopAtlas
+
+        def htmlPack = new File("${rootProject.getRootDir()}/html/assets/images/energen.pack.png")
+        def htmlPack2 = new File("${rootProject.getRootDir()}/html/assets/images/energen.pack2.png")
+        def htmlPack3 = new File("${rootProject.getRootDir()}/html/assets/images/energen.pack3.png")
+        def htmlPack4 = new File("${rootProject.getRootDir()}/html/assets/images/energen.pack4.png")
+        def htmlAtlas = new File("${rootProject.getRootDir()}/html/assets/images/energen.pack.atlas")
+
+        inputs.dir "${rootProject.getRootDir()}/core/assets/images"
+        outputs.file htmlPack
+        outputs.file htmlPack2
+        outputs.file htmlPack3
+        outputs.file htmlPack4
+        outputs.file htmlAtlas
+
+        doLast {
+            androidPack.delete()
+            androidPack2.delete()
+            androidPack3.delete()
+            androidPack4.delete()
+            androidAtlas.delete()
+            TexturePacker.process("${rootProject.getRootDir()}/core/assets/images", "${rootProject.getRootDir()}/android/assets/images", "energen.pack")
+
+            iosPack.delete()
+            iosPack2.delete()
+            iosPack3.delete()
+            iosPack4.delete()
+            iosAtlas.delete()
+            TexturePacker.process("${rootProject.getRootDir()}/core/assets/images", "${rootProject.getRootDir()}/ios/assets/images", "energen.pack")
+
+            desktopPack.delete()
+            desktopPack2.delete()
+            desktopPack3.delete()
+            desktopPack4.delete()
+            desktopAtlas.delete()
+            TexturePacker.process("${rootProject.getRootDir()}/core/assets/images", "${rootProject.getRootDir()}/desktop/assets/images", "energen.pack")
+
+            htmlPack.delete()
+            htmlPack2.delete()
+            htmlPack3.delete()
+            htmlPack4.delete()
+            htmlAtlas.delete()
+            TexturePacker.process("${rootProject.getRootDir()}/core/assets/images", "${rootProject.getRootDir()}/html/assets/images", "energen.pack")
+        }
+    }
+
+    task copyAssets(dependsOn: packTextures) {
+        copy {
+            from "../core/assets"
+            into "../android/assets"
+        }
+        copy {
+            from "../core/assets"
+            into "../ios/assets"
+        }
+        copy {
+            from "../core/assets"
+            into "../desktop/assets"
+        }
+        copy {
+            from "../core/assets"
+            into "../html/assets"
+        }
+    }
+
+    project.tasks.compileJava.dependsOn deleteAssets
+    project.tasks.compileJava.dependsOn packTextures
+    project.tasks.compileJava.dependsOn copyAssets
+}
